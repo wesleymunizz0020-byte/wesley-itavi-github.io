@@ -1,83 +1,246 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerenciamento de Clientes</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Itavig - Gerenciador de Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .overdue {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e5e7eb;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+    </style>
 </head>
-<body>
-  <h1>Gerenciar Clientes</h1>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-10">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
+            <p class="text-lg text-gray-600 mt-2">Gerenciamento de Clientes e Pagamentos</p>
+        </header>
 
-  <form id="formCliente">
-    <input type="text" id="nome" placeholder="Nome do cliente" required>
-    <input type="text" id="telefone" placeholder="Telefone" required>
-    <button type="submit">Adicionar Cliente</button>
-  </form>
+        <div id="appContent">
+            <section class="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
+                <h2 class="text-2xl font-bold text-gray-700 mb-4">Adicionar Novo Cliente</h2>
+                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <input type="text" id="clientName" placeholder="Nome do Cliente" required
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="number" id="serviceValue" placeholder="Valor (R$)" step="0.01" required
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <div class="relative">
+                        <input type="date" id="dueDate" required
+                               class="p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">Vencimento</span>
+                    </div>
+                    <button type="submit"
+                            class="bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        Adicionar Cliente
+                    </button>
+                </form>
+            </section>
 
-  <ul id="listaClientes"></ul>
+            <section class="flex flex-col md:flex-row justify-between items-center mb-6">
+                <div class="w-full md:w-1/2 mb-4 md:mb-0">
+                    <input type="text" id="searchInput" placeholder="Buscar por cliente..."
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="text-gray-700 text-center md:text-right">
+                    <span class="font-bold text-xl" id="clientCount">0</span>
+                    <span class="text-lg"> clientes registrados</span>
+                </div>
+            </section>
 
-  <!-- Firebase -->
-  <script type="module">
-    // Importando os SDKs necessários
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+            <section class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+                </table>
+            </section>
+        </div>
 
-    // Config do seu app (substitua pelos dados que o Firebase te mostrou!)
-    const firebaseConfig = {
-      apiKey: "SUA_API_KEY",
-      authDomain: "SEU_PROJETO.firebaseapp.com",
-      projectId: "SEU_PROJETO",
-      storageBucket: "SEU_PROJETO.appspot.com",
-      messagingSenderId: "123456789",
-      appId: "1:123456789:web:abcdefg"
-    };
+        <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full text-center">
+                <p id="modalMessage" class="text-gray-800 text-lg mb-4"></p>
+                <button id="modalConfirmBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
 
-    // Inicializando Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
+    <!-- Firebase compat scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    // Login anônimo
-    signInAnonymously(auth).then(() => {
-      console.log("Usuário logado anonimamente");
-    }).catch((error) => {
-      console.error("Erro no login:", error);
-    });
+    <script>
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_PROJETO.firebaseapp.com",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_PROJETO.appspot.com",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID"
+        };
 
-    // Referência à coleção "clientes"
-    const clientesRef = collection(db, "clientes");
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
-    // Função para listar clientes
-    async function listarClientes() {
-      const lista = document.getElementById("listaClientes");
-      lista.innerHTML = "";
-      const snapshot = await getDocs(clientesRef);
-      snapshot.forEach(doc => {
-        const li = document.createElement("li");
-        li.textContent = ${doc.data().nome} - ${doc.data().telefone};
-        lista.appendChild(li);
-      });
-    }
+        const clientForm = document.getElementById('clientForm');
+        const clientNameInput = document.getElementById('clientName');
+        const serviceValueInput = document.getElementById('serviceValue');
+        const dueDateInput = document.getElementById('dueDate');
+        const clientsTableBody = document.getElementById('clientsTableBody');
+        const clientCountSpan = document.getElementById('clientCount');
+        const searchInput = document.getElementById('searchInput');
+        const modal = document.getElementById('modal');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
 
-    // Salvar cliente
-    document.getElementById("formCliente").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const nome = document.getElementById("nome").value;
-      const telefone = document.getElementById("telefone").value;
+        let currentUserId = null;
+        let clients = [];
 
-      try {
-        await addDoc(clientesRef, { nome, telefone });
-        alert("Cliente adicionado com sucesso!");
-        document.getElementById("formCliente").reset();
-        listarClientes();
-      } catch (e) {
-        console.error("Erro ao adicionar cliente: ", e);
-      }
-    });
+        const showModal = (message) => {
+            modalMessage.textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
 
-    // Listar clientes ao carregar
-    listarClientes();
-  </script>
+        const hideModal = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        modalConfirmBtn.addEventListener('click', hideModal);
+
+        const formatDate = (dateString) => {
+            const date = new Date(dateString);
+            return ${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()};
+        };
+
+        const renderClients = (filterQuery = '') => {
+            clientsTableBody.innerHTML = '';
+            let visibleCount = 0;
+            const filteredClients = clients.filter(client => client.name.toLowerCase().includes(filterQuery.toLowerCase()));
+            filteredClients.forEach(client => {
+                visibleCount++;
+                const row = document.createElement('tr');
+                const today = new Date();
+                const dueDate = new Date(client.dueDate);
+                if (dueDate < today && client.status !== 'paid') row.classList.add('overdue');
+                row.innerHTML = `
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${client.name}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">R$ ${client.value.toFixed(2)}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${formatDate(client.dueDate)}</td>
+                    <td class="px-6 py-4 text-sm text-center">
+                        <button data-id="${client.id}" class="toggle-status px-2 py-1 inline-flex text-xs font-semibold rounded-full ${client.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${client.status === 'paid' ? 'Pago' : 'Não Pago'}
+                        </button>
+                    </td>
+                    <td class="px-6 py-4 text-center text-sm font-medium">
+                        <button data-id="${client.id}" class="delete-client text-red-600 hover:text-red-900">Excluir</button>
+                    </td>
+                `;
+                clientsTableBody.appendChild(row);
+            });
+            clientCountSpan.textContent = visibleCount;
+        };
+
+        auth.signInAnonymously().then(result => {
+            currentUserId = result.user.uid;
+            console.log("UID do usuário:", currentUserId);
+
+            db.collection(users/${currentUserId}/clientes).onSnapshot(snapshot => {
+                clients = [];
+                snapshot.forEach(doc => {
+                    clients.push({ id: doc.id, ...doc.data() });
+                });
+                clients.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
+                renderClients(searchInput.value);
+            }, error => {
+                console.error("Erro ao carregar clientes:", error);
+                showModal('Erro ao carregar clientes.');
+            });
+        }).catch(error => {
+            console.error("Erro na autenticação:", error);
+            showModal('Erro na autenticação anônima.');
+        });
+
+        clientForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await db.collection(users/${currentUserId}/clientes).add({
+                    name: clientNameInput.value,
+                    value: parseFloat(serviceValueInput.value),
+                    dueDate: dueDateInput.value,
+                    status: 'unpaid',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                clientForm.reset();
+                showModal('Cliente adicionado com sucesso!');
+            } catch (error) {
+                console.error("Erro ao adicionar cliente:", error);
+                showModal('Erro ao adicionar cliente. Veja o console.');
+            }
+        });
+
+        clientsTableBody.addEventListener('click', async (e) => {
+            const target = e.target;
+            if (target.classList.contains('toggle-status')) {
+                const id = target.dataset.id;
+                const clientRef = db.collection(users/${currentUserId}/clientes).doc(id);
+                const client = clients.find(c => c.id === id);
+                if (client) {
+                    try {
+                        const newStatus = client.status === 'paid' ? 'unpaid' : 'paid';
+                        await clientRef.update({ status: newStatus });
+                    } catch (error) {
+                        console.error("Erro ao atualizar status:", error);
+                        showModal('Erro ao atualizar status.');
+                    }
+                }
+            } else if (target.classList.contains('delete-client')) {
+                const id = target.dataset.id;
+                const clientRef = db.collection(users/${currentUserId}/clientes).doc(id);
+                try {
+                    await clientRef.delete();
+                    showModal('Cliente excluído com sucesso!');
+                } catch (error) {
+                    console.error("Erro ao excluir cliente:", error);
+                    showModal('Erro ao excluir cliente.');
+                }
+            }
+        });
+
+        searchInput.addEventListener('input', (e) => {
+            renderClients(e.target.value);
+        });
+    </script>
 </body>
 </html>
