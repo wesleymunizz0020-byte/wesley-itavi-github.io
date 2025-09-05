@@ -15,6 +15,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 </style>
 </head>
 <body class="p-4 md:p-8">
+
 <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-10">
 <header class="mb-8 text-center">
 <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
@@ -76,11 +77,12 @@ class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:rin
 </div>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<!-- Firebase compat scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<script>
 const firebaseConfig = {
 apiKey: "SUA_API_KEY",
 authDomain: "SEU_AUTH_DOMAIN",
@@ -90,7 +92,10 @@ messagingSenderId: "SEU_MESSAGING_SENDER_ID",
 appId: "SEU_APP_ID"
 };
 
-(function() {
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 const clientForm = document.getElementById('clientForm');
 const clientNameInput = document.getElementById('clientName');
 const serviceValueInput = document.getElementById('serviceValue');
@@ -102,7 +107,6 @@ const modal = document.getElementById('modal');
 const modalMessage = document.getElementById('modalMessage');
 const modalConfirmBtn = document.getElementById('modalConfirmBtn');
 
-let db, auth;
 let currentUserId = null;
 let clients = [];
 
@@ -143,67 +147,56 @@ clientsTableBody.appendChild(row);
 clientCountSpan.textContent = visibleCount;
 };
 
-clientForm.addEventListener('submit', async (e) => {
+auth.signInAnonymously().then(result=>{
+currentUserId = result.user.uid;
+console.log("UID do usuário:", currentUserId);
+
+db.collection(users/${currentUserId}/clientes).onSnapshot(snapshot=>{
+clients=[];
+snapshot.forEach(doc=>{
+clients.push({id:doc.id,...doc.data()});
+});
+clients.sort((a,b)=>(a.createdAt?.toMillis?.()||0)-(b.createdAt?.toMillis?.()||0));
+renderClients(searchInput.value);
+});
+}).catch(error=>{console.error("Erro na autenticação:",error); showModal('Erro na autenticação anônima'); });
+
+clientForm.addEventListener('submit', async (e)=>{
 e.preventDefault();
-try {
-const newClient = {
+try{
+await db.collection(users/${currentUserId}/clientes).add({
 name: clientNameInput.value,
 value: parseFloat(serviceValueInput.value),
 dueDate: dueDateInput.value,
 status: 'unpaid',
-createdAt: serverTimestamp()
-};
-const collectionPath = users/${currentUserId}/clientes;
-await addDoc(collection(db, collectionPath), newClient);
+createdAt: firebase.firestore.FieldValue.serverTimestamp()
+});
 clientForm.reset();
 showModal('Cliente adicionado com sucesso!');
-} catch(error) {
-console.error("Erro ao adicionar cliente:",error);
-showModal('Erro ao adicionar cliente. Tente novamente.');
-}
+}catch(error){console.error("Erro ao adicionar cliente:",error); showModal('Erro ao adicionar cliente. Veja o console.');}
 });
 
-clientsTableBody.addEventListener('click', async (e)=>{
+clientsTableBody.addEventListener('click', async e=>{
 const target = e.target;
 if(target.classList.contains('toggle-status')){
 const id = target.dataset.id;
-const clientRef = doc(db, users/${currentUserId}/clientes/${id});
+const clientRef = db.collection(users/${currentUserId}/clientes).doc(id);
 const client = clients.find(c=>c.id===id);
 if(client){
 try{
 const newStatus = client.status==='paid'?'unpaid':'paid';
-await setDoc(clientRef,{status:newStatus},{merge:true});
-}catch(error){console.error(error);showModal('Erro ao atualizar status.');}
+await clientRef.update({status:newStatus});
+}catch(error){console.error("Erro ao atualizar status:",error); showModal('Erro ao atualizar status.');}
 }
 }else if(target.classList.contains('delete-client')){
 const id = target.dataset.id;
-const clientRef = doc(db, users/${currentUserId}/clientes/${id});
-try{ await deleteDoc(clientRef); showModal('Cliente excluído com sucesso!'); }
-catch(error){console.error(error); showModal('Erro ao excluir cliente.'); }
+const clientRef = db.collection(users/${currentUserId}/clientes).doc(id);
+try{ await clientRef.delete(); showModal('Cliente excluído com sucesso!'); }
+catch(error){console.error("Erro ao excluir cliente:",error); showModal('Erro ao excluir cliente.'); }
 }
 });
 
 searchInput.addEventListener('input',(e)=>{renderClients(e.target.value);});
-
-const init = ()=>{
-try{
-const app = initializeApp(firebaseConfig);
-auth = getAuth(app);
-db = getFirestore(app);
-signInAnonymously(auth).then((result)=>{
-currentUserId = result.user.uid;
-const q = query(collection(db, users/${currentUserId}/clientes));
-onSnapshot(q,(querySnapshot)=>{
-clients=[];
-querySnapshot.forEach((doc)=>{clients.push({id:doc.id,...doc.data()});});
-clients.sort((a,b)=>(a.createdAt?.toMillis?.()||0) - (b.createdAt?.toMillis?.()||0));
-renderClients(searchInput.value);
-});
-}).catch((error)=>{console.error(error); showModal('Erro na autenticação anônima.');});
-}catch(error){console.error(error); showModal('Erro ao iniciar o aplicativo.');}
-};
-init();
-})();
 </script>
 </body>
 </html>
