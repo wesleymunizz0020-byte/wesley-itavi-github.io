@@ -304,6 +304,156 @@
 
         })();
     </script>
-</body>
+</body><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F4F6;
+        }
+        .overdue {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        /* Barra de rolagem personalizada para tabela */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
+        <p class="text-lg text-gray-600 mt-2">Gerenciamento de Clientes e Pagamentos</p>
+    </header>
 
-</html>
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div id="appContent">
+            <section class="mb-gray-50 p-6 rounded-lg shadow-inner mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Adicionar Novo Cliente</h2>
+                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="clientName" placeholder="Nome do cliente" required
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="clientDebt" placeholder="Valor (R$)" step="0.01" required
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="md:col-span-2 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600">
+                        Salvar Cliente
+                    </button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Função para salvar os dados no localStorage
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Impede o recarregamento da página
+
+            // Captura os valores dos inputs
+            const clientName = document.getElementById('clientName').value;
+            const clientDebt = document.getElementById('clientDebt').value;
+
+            // Salva no localStorage como um objeto
+            let clients = JSON.parse(localStorage.getItem('clients') || '[]');
+            clients.push({ name: clientName, debt: clientDebt });
+            localStorage.setItem('clients', JSON.stringify(clients));
+
+            // Limpa o formulário
+            this.reset();
+
+            alert('Cliente salvo com sucesso!');
+        });
+    </script>
+</body> <!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Clientes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F3F4F6;
+        }
+        .overdue {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        /* Barra de rolagem personalizada para tabela */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
+        <p class="text-lg text-gray-600 mt-2">Gerenciamento de Clientes e Pagamentos</p>
+    </header>
+
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div id="appContent">
+            <section class="mb-gray-50 p-6 rounded-lg shadow-inner mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Adicionar Novo Cliente</h2>
+                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="clientName" placeholder="Nome do cliente" required
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="clientDebt" placeholder="Valor (R$)" step="0.01" required
+                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit" class="md:col-span-2 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600">
+                        Salvar Cliente
+                    </button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Função para salvar os dados no localStorage
+        document.getElementById('clientForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Impede o recarregamento da página
+
+            // Captura os valores dos inputs
+            const clientName = document.getElementById('clientName').value;
+            const clientDebt = document.getElementById('clientDebt').value;
+
+            // Salva no localStorage como um objeto
+            let clients = JSON.parse(localStorage.getItem('clients') || '[]');
+            clients.push({ name: clientName, debt: clientDebt });
+            localStorage.setItem('clients', JSON.stringify(clients));
+
+            // Limpa o formulário
+            this.reset();
+
+            alert('Cliente salvo com sucesso!');
+        });
+    </script>
+</body><!DOCTYPE html>
