@@ -33,9 +33,7 @@
     </style>
 </head>
 <body class="p-4 md:p-8">
-
     <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-10">
-
         <!-- Header -->
         <header class="mb-8 text-center">
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
@@ -94,7 +92,7 @@
                 </table>
             </section>
         </div>
-        
+
         <!-- Modal for confirmation/messages -->
         <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4">
             <div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full text-center">
@@ -102,21 +100,25 @@
                 <button id="modalConfirmBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">OK</button>
             </div>
         </div>
-
     </div>
 
     <script type="module">
+        // Firebase configuration (você precisa definir isso)
+        const firebaseConfig = {
+            // Substitua pelos valores do seu projeto Firebase
+            apiKey: "SUA_API_KEY",
+            authDomain: "SEU_AUTH_DOMAIN",
+            projectId: "SEU_PROJECT_ID",
+            storageBucket: "SEU_STORAGE_BUCKET",
+            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+            appId: "SEU_APP_ID" // Substitua por __app_id se definido no ambiente
+        };
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global variables provided by the environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        
-        // Use a self-invoking function to avoid global variable pollution.
         (function() {
-            // Get references to all necessary DOM elements.
             const clientForm = document.getElementById('clientForm');
             const clientNameInput = document.getElementById('clientName');
             const serviceValueInput = document.getElementById('serviceValue');
@@ -131,24 +133,20 @@
             let db, auth;
             let currentUserId = null;
             let clients = [];
-            
-            // A function to show a custom modal instead of an alert.
+
             const showModal = (message) => {
                 modalMessage.textContent = message;
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
             };
 
-            // A function to hide the modal.
             const hideModal = () => {
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             };
 
-            // Event listener for the modal's OK button.
             modalConfirmBtn.addEventListener('click', hideModal);
 
-            // Function to format dates as dd/mm/yyyy.
             const formatDate = (dateString) => {
                 const date = new Date(dateString);
                 const day = String(date.getDate()).padStart(2, '0');
@@ -156,8 +154,7 @@
                 const year = date.getFullYear();
                 return ${day}/${month}/${year};
             };
-            
-            // Function to render the client table.
+
             const renderClients = (filterQuery = '') => {
                 clientsTableBody.innerHTML = '';
                 let visibleCount = 0;
@@ -169,7 +166,6 @@
                 filteredClients.forEach(client => {
                     visibleCount++;
                     const row = document.createElement('tr');
-                    
                     const today = new Date();
                     const dueDate = new Date(client.dueDate);
                     const isOverdue = dueDate < today && client.status !== 'paid';
@@ -177,38 +173,28 @@
                     if (isOverdue) {
                         row.classList.add('overdue');
                     }
-                    
-                    row.innerHTML += <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${client.name}</td>;
-                    
-                    row.innerHTML += <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ ${client.value.toFixed(2)}</td>;
-                    
-                    row.innerHTML += <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(client.dueDate)}</td>;
-                    
-                    const statusText = client.status === 'paid' ? 'Pago' : 'Não Pago';
-                    const statusColor = client.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                    row.innerHTML += `
+
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${client.name}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">R$ ${client.value.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${formatDate(client.dueDate)}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                            <button data-id="${client.id}" class="toggle-status px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColor}">
-                                ${statusText}
+                            <button data-id="${client.id}" class="toggle-status px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${client.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${client.status === 'paid' ? 'Pago' : 'Não Pago'}
                             </button>
                         </td>
-                    `;
-                    
-                    row.innerHTML += `
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                             <button data-id="${client.id}" class="delete-client text-red-600 hover:text-red-900 transition-colors">
                                 Excluir
                             </button>
                         </td>
                     `;
-                    
                     clientsTableBody.appendChild(row);
                 });
 
                 clientCountSpan.textContent = visibleCount;
             };
 
-            // Handle client form submission
             clientForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
 
@@ -220,10 +206,11 @@
                         status: 'unpaid',
                         createdAt: new Date(),
                     };
-                    
+
+                    const appId = firebaseConfig.appId; // Usar o appId do config
                     const collectionPath = /artifacts/${appId}/users/${currentUserId}/clientes;
                     await addDoc(collection(db, collectionPath), newClient);
-                    
+
                     clientForm.reset();
                     showModal('Cliente adicionado com sucesso!');
                 } catch (error) {
@@ -231,14 +218,13 @@
                     showModal('Erro ao adicionar cliente. Tente novamente.');
                 }
             });
-            
-            // Handle table clicks for toggling status and deleting clients.
+
             clientsTableBody.addEventListener('click', async (e) => {
                 const target = e.target;
-                
+
                 if (target.classList.contains('toggle-status')) {
                     const id = target.dataset.id;
-                    const clientRef = doc(db, /artifacts/${appId}/users/${currentUserId}/clientes/${id});
+                    const clientRef = doc(db, /artifacts/${firebaseConfig.appId}/users/${currentUserId}/clientes/${id});
                     const client = clients.find(c => c.id === id);
 
                     if (client) {
@@ -252,7 +238,7 @@
                     }
                 } else if (target.classList.contains('delete-client')) {
                     const id = target.dataset.id;
-                    const clientRef = doc(db, /artifacts/${appId}/users/${currentUserId}/clientes/${id});
+                    const clientRef = doc(db, /artifacts/${firebaseConfig.appId}/users/${currentUserId}/clientes/${id});
                     try {
                         await deleteDoc(clientRef);
                         showModal('Cliente excluído com sucesso!');
@@ -263,24 +249,21 @@
                 }
             });
 
-            // Handle search input.
             searchInput.addEventListener('input', (e) => {
                 renderClients(e.target.value);
             });
 
-            // Main initialization function
             const init = () => {
                 try {
                     const app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
-                    
-                    // Sign in anonymously to get a user ID
+
                     signInAnonymously(auth).then((result) => {
                         currentUserId = result.user.uid;
                         console.log(Signed in anonymously with UID: ${currentUserId});
 
-                        const q = query(collection(db, /artifacts/${appId}/users/${currentUserId}/clientes));
+                        const q = query(collection(db, /artifacts/${firebaseConfig.appId}/users/${currentUserId}/clientes));
                         onSnapshot(q, (querySnapshot) => {
                             clients = [];
                             querySnapshot.forEach((doc) => {
@@ -290,170 +273,17 @@
                             renderClients(searchInput.value);
                         });
                     }).catch((error) => {
-                        console.error("Erro na autenticação anónima:", error);
+                        console.error("Erro na autenticação anônima:", error);
                         showModal('Erro ao iniciar o aplicativo. Por favor, recarregue a página.');
                     });
-
                 } catch (error) {
                     console.error("Erro na inicialização do Firebase:", error);
                     showModal('Erro ao iniciar o aplicativo. Verifique sua conexão.');
                 }
             };
-            
-            init();
 
+            init();
         })();
     </script>
-</body><!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Clientes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F3F4F6;
-        }
-        .overdue {
-            background-color: #fee2e2;
-            border-left: 4px solid #ef4444;
-        }
-        /* Barra de rolagem personalizada para tabela */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-    </style>
-</head>
-<body>
-    <header class="mb-8 text-center">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
-        <p class="text-lg text-gray-600 mt-2">Gerenciamento de Clientes e Pagamentos</p>
-    </header>
-
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
-        <div id="appContent">
-            <section class="mb-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Adicionar Novo Cliente</h2>
-                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="clientName" placeholder="Nome do cliente" required
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="number" id="clientDebt" placeholder="Valor (R$)" step="0.01" required
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="md:col-span-2 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600">
-                        Salvar Cliente
-                    </button>
-                </form>
-            </section>
-        </div>
-    </div>
-
-    <script>
-        // Função para salvar os dados no localStorage
-        document.getElementById('clientForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // Impede o recarregamento da página
-
-            // Captura os valores dos inputs
-            const clientName = document.getElementById('clientName').value;
-            const clientDebt = document.getElementById('clientDebt').value;
-
-            // Salva no localStorage como um objeto
-            let clients = JSON.parse(localStorage.getItem('clients') || '[]');
-            clients.push({ name: clientName, debt: clientDebt });
-            localStorage.setItem('clients', JSON.stringify(clients));
-
-            // Limpa o formulário
-            this.reset();
-
-            alert('Cliente salvo com sucesso!');
-        });
-    </script>
-</body> <!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Clientes</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F3F4F6;
-        }
-        .overdue {
-            background-color: #fee2e2;
-            border-left: 4px solid #ef4444;
-        }
-        /* Barra de rolagem personalizada para tabela */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-    </style>
-</head>
-<body>
-    <header class="mb-8 text-center">
-        <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
-        <p class="text-lg text-gray-600 mt-2">Gerenciamento de Clientes e Pagamentos</p>
-    </header>
-
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
-        <div id="appContent">
-            <section class="mb-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">Adicionar Novo Cliente</h2>
-                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="clientName" placeholder="Nome do cliente" required
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <input type="number" id="clientDebt" placeholder="Valor (R$)" step="0.01" required
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="md:col-span-2 bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600">
-                        Salvar Cliente
-                    </button>
-                </form>
-            </section>
-        </div>
-    </div>
-
-    <script>
-        // Função para salvar os dados no localStorage
-        document.getElementById('clientForm').addEventListener('submit', function(e) {
-            e.preventDefault(); // Impede o recarregamento da página
-
-            // Captura os valores dos inputs
-            const clientName = document.getElementById('clientName').value;
-            const clientDebt = document.getElementById('clientDebt').value;
-
-            // Salva no localStorage como um objeto
-            let clients = JSON.parse(localStorage.getItem('clients') || '[]');
-            clients.push({ name: clientName, debt: clientDebt });
-            localStorage.setItem('clients', JSON.stringify(clients));
-
-            // Limpa o formulário
-            this.reset();
-
-            alert('Cliente salvo com sucesso!');
-        });
-    </script>
-</body><!DOCTYPE html>
+</body>
+</html>
