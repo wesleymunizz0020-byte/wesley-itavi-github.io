@@ -1,278 +1,208 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Itavig - Gerenciador de Clientes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
         }
-        .overdue {
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .status-red {
             background-color: #fee2e2;
-            border-left: 4px solid #ef4444;
+            color: #ef4444;
         }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        .status-blue {
+            background-color: #dbeafe;
+            color: #3b82f6;
         }
-        ::-webkit-scrollbar-track {
-            background: #e5e7eb;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #9ca3af;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #6b7280;
+        .status-gray {
+            background-color: #e5e7eb;
+            color: #6b7280;
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
-    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-10">
-        <header class="mb-8 text-center">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Itavig</h1>
-            <p class="text-lg text-gray-600 mt-2">Gerenciamento de Clientes e Pagamentos</p>
-        </header>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Itavig</h1>
+        <input type="text" id="searchInput" placeholder="Pesquisar por nome do cliente..."
+               class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 w-full">
+        <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <input type="text" id="clientName" placeholder="Nome do Cliente" required
+                   class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="date" id="paymentDate" required
+                   class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="number" id="paymentValue" placeholder="Valor (R$)" required
+                   class="p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-blue-600 text-white p-3 rounded-md font-medium hover:bg-blue-700 transition-colors col-span-1 md:col-span-2">
+                Adicionar Cliente
+            </button>
+        </form>
 
-        <div id="appContent">
-            <section class="bg-gray-50 p-6 rounded-lg shadow-inner mb-8">
-                <h2 class="text-2xl font-bold text-gray-700 mb-4">Adicionar Novo Cliente</h2>
-                <form id="clientForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <input type="text" id="clientName" placeholder="Nome do Cliente" required
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="number" id="serviceValue" placeholder="Valor (R$)" step="0.01" required
-                           class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                    <div class="relative">
-                        <input type="date" id="dueDate" required
-                               class="p-3 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">Vencimento</span>
-                    </div>
-                    <button type="submit"
-                            class="bg-indigo-600 text-white p-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                        Adicionar Cliente
-                    </button>
-                </form>
-            </section>
-
-            <section class="flex flex-col md:flex-row justify-between items-center mb-6">
-                <div class="w-full md:w-1/2 mb-4 md:mb-0">
-                    <input type="text" id="searchInput" placeholder="Buscar por cliente..."
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                </div>
-                <div class="text-gray-700 text-center md:text-right">
-                    <span class="font-bold text-xl" id="clientCount">0</span>
-                    <span class="text-lg"> clientes registrados</span>
-                </div>
-            </section>
-
-            <section class="overflow-x-auto rounded-lg shadow-md border border-gray-200">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="clientsTableBody" class="bg-white divide-y divide-gray-200"></tbody>
-                </table>
-            </section>
-        </div>
-
-        <div id="modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center p-4">
-            <div class="bg-white rounded-lg shadow-2xl p-6 max-w-sm w-full text-center">
-                <p id="modalMessage" class="text-gray-800 text-lg mb-4"></p>
-                <button id="modalConfirmBtn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">OK</button>
-            </div>
+        <div id="clientsList">
+            <!-- Lista de clientes será renderizada aqui -->
         </div>
     </div>
 
-    <!-- Firebase compat scripts -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
     <script>
-        const firebaseConfig = {
-            apiKey: "SUA_API_KEY",
-            authDomain: "SEU_PROJETO.firebaseapp.com",
-            projectId: "SEU_PROJECT_ID",
-            storageBucket: "SEU_PROJETO.appspot.com",
-            messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-            appId: "SEU_APP_ID"
-        };
-
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        const clientForm = document.getElementById('clientForm');
-        const clientNameInput = document.getElementById('clientName');
-        const serviceValueInput = document.getElementById('serviceValue');
-        const dueDateInput = document.getElementById('dueDate');
-        const clientsTableBody = document.getElementById('clientsTableBody');
-        const clientCountSpan = document.getElementById('clientCount');
-        const searchInput = document.getElementById('searchInput');
-        const modal = document.getElementById('modal');
-        const modalMessage = document.getElementById('modalMessage');
-        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-
-        let currentUserId = null;
-        let clients = [];
-
-        const showModal = (message) => {
-            modalMessage.textContent = message;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        };
-
-        const hideModal = () => {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        };
-
-        modalConfirmBtn.addEventListener('click', hideModal);
-
+        // Função para formatar a data como dd/mm/aaaa
         const formatDate = (dateString) => {
             const date = new Date(dateString);
-            return ${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()};
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
         };
 
-        const renderClients = (filterQuery = '') => {
-            clientsTableBody.innerHTML = '';
-            let visibleCount = 0;
-            const filteredClients = clients.filter(client => client.name.toLowerCase().includes(filterQuery.toLowerCase()));
-            filteredClients.forEach(client => {
-                visibleCount++;
-                const row = document.createElement('tr');
-                const today = new Date();
-                const dueDate = new Date(client.dueDate);
-                if (dueDate < today && client.status !== 'paid') row.classList.add('overdue');
-                row.innerHTML = `
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${client.name}</td>
-                    <td class="px-6 py-4 text-sm text-gray-500">R$ ${client.value.toFixed(2)}</td>
-                    <td class="px-6 py-4 text-sm text-gray-500">${formatDate(client.dueDate)}</td>
-                    <td class="px-6 py-4 text-sm text-center">
-                        <button data-id="${client.id}" class="toggle-status px-2 py-1 inline-flex text-xs font-semibold rounded-full ${client.status === 'paid' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${client.status === 'paid' ? 'Pago' : 'Não Pago'}
-                        </button>
-                    </td>
-                    <td class="px-6 py-4 text-center text-sm font-medium">
-                        <button data-id="${client.id}" class="delete-client text-red-600 hover:text-red-900">Excluir</button>
-                    </td>
-                `;
-                clientsTableBody.appendChild(row);
-            });
-            clientCountSpan.textContent = visibleCount;
+        // Função para obter a diferença de dias entre duas datas
+        const getDayDifference = (date1, date2) => {
+            const diffTime = Math.abs(date2.getTime() - date1.getTime());
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         };
 
-        auth.signInAnonymously().then(result => {
-            currentUserId = result.user.uid;
-            console.log("UID do usuário:", currentUserId);
+        // Função para renderizar a lista de clientes na página
+        const renderClients = (clientsToRender) => {
+            const clientsList = document.getElementById('clientsList');
+            clientsList.innerHTML = ''; // Limpa a lista antes de renderizar
 
-            db.collection(users/${currentUserId}/clientes).onSnapshot(snapshot => {
-                clients = [];
-                snapshot.forEach(doc => {
-                    clients.push({ id: doc.id, ...doc.data() });
-                });
-                clients.sort((a, b) => (a.createdAt?.toMillis?.() || 0) - (b.createdAt?.toMillis?.() || 0));
-                renderClients(searchInput.value);
-            }, error => {
-                console.error("Erro ao carregar clientes:", error);
-                showModal('Erro ao carregar clientes.');
-            });
-        }).catch(error => {
-            console.error("Erro na autenticação:", error);
-            showModal('Erro na autenticação anônima.');
-        });
-
-        clientForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            try {
-                await db.collection(users/${currentUserId}/clientes).add({
-                    name: clientNameInput.value,
-                    value: parseFloat(serviceValueInput.value),
-                    dueDate: dueDateInput.value,
-                    status: 'unpaid',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                clientForm.reset();
-                showModal('Cliente adicionado com sucesso!');
-            } catch (error) {
-                console.error("Erro ao adicionar cliente:", error);
-                showModal('Erro ao adicionar cliente. Veja o console.');
+            let clients = clientsToRender || JSON.parse(localStorage.getItem('clients')) || [];
+            
+            if (clients.length === 0) {
+                clientsList.innerHTML = `<p class="text-center text-gray-500">Nenhum cliente cadastrado.</p>`;
+                return;
             }
-        });
 
-        clientsTableBody.addEventListener('click', async (e) => {
-            const target = e.target;
-            if (target.classList.contains('toggle-status')) {
-                const id = target.dataset.id;
-                const clientRef = db.collection(users/${currentUserId}/clientes).doc(id);
-                const client = clients.find(c => c.id === id);
-                if (client) {
-                    try {
-                        const newStatus = client.status === 'paid' ? 'unpaid' : 'paid';
-                        await clientRef.update({ status: newStatus });
-                    } catch (error) {
-                        console.error("Erro ao atualizar status:", error);
-                        showModal('Erro ao atualizar status.');
+            clients.forEach(client => {
+                const now = new Date();
+                const paymentDate = new Date(client.paymentDate);
+                const daysAfterPayment = getDayDifference(now, paymentDate);
+                let statusClass = '';
+                let statusText = '';
+
+                // Verifica o status do pagamento
+                if (client.isPaid) {
+                    if (daysAfterPayment > 5) {
+                        statusClass = 'status-gray';
+                        statusText = 'Regular (Pago)';
+                    } else {
+                        statusClass = 'status-blue';
+                        statusText = 'Pago';
                     }
+                } else if (now > paymentDate) {
+                    statusClass = 'status-red';
+                    statusText = 'Em Atraso';
+                } else {
+                    statusClass = 'status-blue'; // Considera azul se a data de pagamento ainda não chegou
+                    statusText = 'A Pagar';
                 }
-            } else if (target.classList.contains('delete-client')) {
-                const id = target.dataset.id;
-                const clientRef = db.collection(users/${currentUserId}/clientes).doc(id);
-                try {
-                    await clientRef.delete();
-                    showModal('Cliente excluído com sucesso!');
-                } catch (error) {
-                    console.error("Erro ao excluir cliente:", error);
-                    showModal('Erro ao excluir cliente.');
+
+                const clientCard = document.createElement('div');
+                clientCard.classList.add('p-4', 'rounded-lg', 'shadow-sm', 'mb-4', 'flex', 'flex-col', 'md:flex-row', 'items-center', 'justify-between', statusClass);
+                
+                clientCard.innerHTML = `
+                    <div class="flex-grow mb-2 md:mb-0">
+                        <p class="text-lg font-bold">${client.name}</p>
+                        <p class="text-sm">Data de Vencimento: ${formatDate(client.paymentDate)}</p>
+                        <p class="text-sm">Valor: R$ ${parseFloat(client.value).toFixed(2).replace('.', ',')}</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm font-semibold">${statusText}</span>
+                        <button class="toggle-paid-btn bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors" data-id="${client.id}">
+                            ${client.isPaid ? 'Marcar como Não Pago' : 'Marcar como Pago'}
+                        </button>
+                        <button class="delete-btn bg-white text-gray-700 p-2 rounded-full shadow-md hover:bg-gray-100 transition-colors" data-id="${client.id}">
+                            Deletar
+                        </button>
+                    </div>
+                `;
+                clientsList.appendChild(clientCard);
+            });
+
+            // Adiciona listeners para os botões após a renderização
+            document.querySelectorAll('.toggle-paid-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const id = event.target.dataset.id;
+                    togglePaidStatus(id);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const id = event.target.dataset.id;
+                    deleteClient(id);
+                });
+            });
+        };
+
+        // Função para alternar o status de pagamento
+        const togglePaidStatus = (id) => {
+            let clients = JSON.parse(localStorage.getItem('clients')) || [];
+            clients = clients.map(client => {
+                if (client.id === id) {
+                    return { ...client, isPaid: !client.isPaid };
                 }
-            }
+                return client;
+            });
+            localStorage.setItem('clients', JSON.stringify(clients));
+            renderClients();
+        };
+
+        // Função para deletar um cliente
+        const deleteClient = (id) => {
+            let clients = JSON.parse(localStorage.getItem('clients')) || [];
+            clients = clients.filter(client => client.id !== id);
+            localStorage.setItem('clients', JSON.stringify(clients));
+            renderClients();
+        };
+
+        // Adiciona um novo cliente ao formulário
+        document.getElementById('clientForm').addEventListener('submit', (event) => {
+            event.preventDefault();
+            const clientName = document.getElementById('clientName').value;
+            const paymentDate = document.getElementById('paymentDate').value;
+            const paymentValue = document.getElementById('paymentValue').value;
+
+            const newClient = {
+                id: Date.now().toString(), // ID único
+                name: clientName,
+                paymentDate: paymentDate,
+                value: paymentValue,
+                isPaid: false
+            };
+
+            let clients = JSON.parse(localStorage.getItem('clients')) || [];
+            clients.push(newClient);
+            localStorage.setItem('clients', JSON.stringify(clients));
+
+            document.getElementById('clientForm').reset();
+            renderClients();
         });
 
-        searchInput.addEventListener('input', (e) => {
-            renderClients(e.target.value);
+        // Event listener para a pesquisa de clientes
+        document.getElementById('searchInput').addEventListener('keyup', (event) => {
+            const searchTerm = event.target.value.toLowerCase();
+            const allClients = JSON.parse(localStorage.getItem('clients')) || [];
+            
+            const filteredClients = allClients.filter(client => 
+                client.name.toLowerCase().includes(searchTerm)
+            );
+            
+            renderClients(filteredClients);
         });
+
+        // Renderiza os clientes na página quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', renderClients);
     </script>
-</body>
-</html>
-const firebaseConfig = {
-  apiKey: "sua-api-key",
-  authDomain: "seu-projeto.firebaseapp.com",
-  databaseURL: "https://seu-projeto-default-rtdb.firebaseio.com",
-  projectId: "seu-projeto",
-  storageBucket: "seu-projeto.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
-};
-
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
-// const db = firebase.firestore(); // Para Firestore
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meu App Web</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div id="app">
-    <h1>Lista de Tarefas</h1>
-    <input id="taskInput" placeholder="Nova tarefa">
-    <button onclick="addTask()">Adicionar Tarefa</button>
-    <ul id="taskList"></ul>
-  </div>
-  <script type="module" src="app.js"></script>
-  <!-- Se usar CDN, adicione aqui os scripts do Firebase -->
 </body>
 </html>
